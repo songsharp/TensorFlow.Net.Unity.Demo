@@ -1,0 +1,16 @@
+{
+  "name": "basketflow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs": "latest",
+    "@tensorflow/tfjs-node": "latest",
+    "express": "^4.16.3"
+  }
+}
