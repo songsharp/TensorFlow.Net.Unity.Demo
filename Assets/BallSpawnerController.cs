@@ -69,8 +69,9 @@ public class BallSpawnerController : MonoBehaviour
 
 			var closeness = Math.Min(10f, dist) / 10f;
 
-			//float force = GetForceFromTensorFlow(dist); //使用tf获取投篮力度
-			float force = GetForceFromMagicFormula(dist); //60%也不是很Magic
+			//float force = GetForceRandomly(dist); //使用随机力量投篮
+			float force = GetForceFromTensorFlow(dist); //使用tf获取投篮力度
+			//float force = GetForceFromMagicFormula(dist); //60%也不是很Magic
 
 			var ball = Instantiate(PrefabBall, transform.position, Quaternion.identity);
 			var bc = ball.GetComponent<BallController>();
@@ -118,7 +119,7 @@ public class BallSpawnerController : MonoBehaviour
 
 	void MoveToRandomDistance()
 	{
-		var newPosition = new Vector3(TransformGoal.position.x + Random.Range(3f,25f), transform.parent.position.y, TransformGoal.position.z);
+		var newPosition = new Vector3(TransformGoal.position.x + Random.Range(2.5f, 23f), transform.parent.position.y, TransformGoal.position.z);
 		transform.parent.position = newPosition;
 	}
 }
