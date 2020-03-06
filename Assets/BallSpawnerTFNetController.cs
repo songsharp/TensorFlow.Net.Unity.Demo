@@ -75,7 +75,7 @@ public class BallSpawnerTFNetController : MonoBehaviour
 		// Gradient descent
 		// Note, minimize() knows to modify W and b because Variable objects are trainable=True by default
 		optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost);
-		int training_epochs = 200;
+		int training_epochs = 1000;
 		
 		for (int epoch = 0; epoch < training_epochs; epoch++)
 		{
@@ -176,8 +176,8 @@ public class BallSpawnerTFNetController : MonoBehaviour
 
 				var closeness = Math.Min(10f, dist) / 10f;
 
-				//前期200个靠命中，之后靠训练的数据
-				float force = SuccessCountFlag > 500 ? GetForceFromTensorFlow(dist) : GetForceRandomly(dist);
+				//前期50个靠随机，之后靠训练的数据
+				float force = SuccessCountFlag > TrainingCount ? GetForceFromTensorFlow(dist) : GetForceRandomly(dist);
 				//Debug.Log(force + "    " + force2);
 				var ball = Instantiate(PrefabBall, transform.position, Quaternion.identity);
 				var bc = ball.GetComponent<BallController>();
@@ -193,6 +193,8 @@ public class BallSpawnerTFNetController : MonoBehaviour
 			}
 		}
 	}
+
+	int TrainingCount = 500;
 	int SuccessCountFlag;
 	List<float> testXTemp = new List<float>();
 	List<float> testYTemp = new List<float>();
@@ -213,16 +215,17 @@ public class BallSpawnerTFNetController : MonoBehaviour
 			trainXTemp.Add(ball.Distance);
 			trainYTemp.Add(ball.Force.y);
 		}
-		if (BallController.SuccessCount == 500)
+		if (SuccessCountFlag > TrainingCount) return;
+
+		if (BallController.SuccessCount == TrainingCount)
 		{
 			BallController.SuccessCount = 0;
 			BallController.ShotCount = 0;
 		}
 
-		//每500次命中，训练一次
-		if (++SuccessCountFlag % 500 == 0)
+		//TrainingCount 命中，训练一次
+		if (++SuccessCountFlag % TrainingCount == 0)
 		{
-			
 			test_X = np.array(testXTemp.ToArray());
 			test_Y = np.array(testYTemp.ToArray());
 			train_X = np.array(trainXTemp.ToArray());
@@ -250,7 +253,13 @@ public class BallSpawnerTFNetController : MonoBehaviour
 
 	void MoveToRandomDistance()
 	{
-		var newPosition = new Vector3(TransformGoal.position.x + Random.Range(5f, 20f), transform.parent.position.y, TransformGoal.position.z);// + Random.Range(-5f, 5f));
+		float v;
+		if (SuccessCountFlag < 100)
+			v = Random.Range(5f, 20f);
+		else
+			v = Random.Range(5f, 20f);
+
+		var newPosition = new Vector3(TransformGoal.position.x + v, transform.parent.position.y, TransformGoal.position.z);// + Random.Range(-5f, 5f));
 		transform.parent.position = newPosition;
 	}
 }

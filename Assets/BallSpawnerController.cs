@@ -21,8 +21,7 @@ public class BallSpawnerController : MonoBehaviour
 	public Transform TransformAim;
 	public GameObject PrefabBall;
 
-	[Range(0, 10)]
-	public float maxVariance;
+
 
 	private float test = 1f;
 
@@ -70,8 +69,8 @@ public class BallSpawnerController : MonoBehaviour
 			var closeness = Math.Min(10f, dist) / 10f;
 
 			//float force = GetForceRandomly(dist); //使用随机力量投篮
-			float force = GetForceFromTensorFlow(dist); //使用tf获取投篮力度
-			//float force = GetForceFromMagicFormula(dist); //60%也不是很Magic
+			//float force = GetForceFromTensorFlow(dist); //使用tf获取投篮力度
+			float force = GetForceFromMagicFormula(dist); //60%也不是很Magic
 
 			var ball = Instantiate(PrefabBall, transform.position, Quaternion.identity);
 			var bc = ball.GetComponent<BallController>();
@@ -110,6 +109,9 @@ public class BallSpawnerController : MonoBehaviour
 	{
 		return Random.Range(0f, 1f);
 	}
+
+	[Range(0, 10)]
+	public float maxVariance;
 	//这应该是作者之前训练获得的两个权重参数，命中率在60%。可以加快训练。
 	float GetForceFromMagicFormula(float distance)
 	{
