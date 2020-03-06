@@ -1686,6 +1686,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: TriggerTop
       objectReference: {fileID: 0}
+    - target: {fileID: 1340460144850004, guid: a07f0417874ad4e77bdfbf768d8f4e29, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1534899021713348, guid: a07f0417874ad4e77bdfbf768d8f4e29, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1609130396192620, guid: a07f0417874ad4e77bdfbf768d8f4e29, type: 3}
       propertyPath: m_Name
       value: TriggerBottom
@@ -1725,6 +1733,11 @@ PrefabInstance:
     - target: {fileID: 4466359030055882, guid: a07f0417874ad4e77bdfbf768d8f4e29, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: 65006839573001320, guid: a07f0417874ad4e77bdfbf768d8f4e29,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a07f0417874ad4e77bdfbf768d8f4e29, type: 3}

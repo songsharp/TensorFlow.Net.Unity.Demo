@@ -31,39 +31,51 @@ public class BallSpawnerTFNetController : MonoBehaviour
 	NumPyRandom rng = np.random;
 	public NDArray train_X;
 	public NDArray train_Y;
+	public NDArray test_X;
+	public NDArray test_Y;
 	int n_samples;
 	Session sess;
 	Graph graph;
 	Tensor X, Y, pred;
 	RefVariable W, b;
 	void Initializer()
-	{
-		train_X = np.array(15.45087f);
-		train_Y = np.array(0.6059656f);
+	{		
 		// Start training
-		loadGraph();
+		loadSession();
 	}
-	void Training()
+	Tensor cost;
+	Operation optimizer;
+	void loadSession()
 	{
-		isTraining = true;
-		n_samples = train_X.shape[0];
+		//TextAsset graphModel = Resources.Load("model.pb") as TextAsset;
+		//graph = new Graph();
+		//graph.Import(graphModel.bytes);
+		//sess = new Session(graph);
+		sess = new Session();
+		
 		// tf Graph Input
 		X = tf.placeholder(tf.float32);
 		Y = tf.placeholder(tf.float32);
 		//W = tf.Variable(0.0317f, dtype: tf.float32, name: "weight");
 		//b = tf.Variable( -0.125f, dtype: tf.float32, name: "bias");
-		W = tf.Variable(0f, dtype: tf.float32, name: "weight");
-		b = tf.Variable(0f, dtype: tf.float32, name: "bias");
+		W = tf.Variable(0.3f, dtype: tf.float32, name: "weight");
+		b = tf.Variable(-0.1f, dtype: tf.float32, name: "bias");
 		// Construct a linear model
 		pred = tf.add(tf.multiply(X, W), b);
-		// Mean squared error
-		var cost = tf.reduce_sum(tf.pow(pred - Y, 2.0f)) / (2.0f * n_samples);
-		// Gradient descent
-		// Note, minimize() knows to modify W and b because Variable objects are trainable=True by default
-		var optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost);
+
+	}
+	void Training()
+	{
+		isTraining = true;
 		// Initialize the variables (i.e. assign their default value)
 		sess.run(tf.global_variables_initializer());
-		int training_epochs = 100;
+		n_samples = train_X.shape[0];
+		// Mean squared error
+		cost = tf.reduce_sum(tf.pow(pred - Y, 2.0f)) / (2.0f * n_samples);
+		// Gradient descent
+		// Note, minimize() knows to modify W and b because Variable objects are trainable=True by default
+		optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost);
+		int training_epochs = 200;
 		
 		for (int epoch = 0; epoch < training_epochs; epoch++)
 		{
@@ -82,8 +94,7 @@ public class BallSpawnerTFNetController : MonoBehaviour
 		var training_cost = sess.run(cost, (X, train_X), (Y, train_Y));
 		Debug.Log($"Training cost={training_cost} W={sess.run(W)} b={sess.run(b)}");
 		// Testing example
-		var test_X = np.array(6.83f, 4.668f, 8.9f, 7.91f, 5.7f, 8.7f, 3.1f, 2.1f);
-		var test_Y = np.array(1.84f, 2.273f, 3.2f, 2.831f, 2.92f, 3.24f, 1.35f, 1.03f);
+
 		Debug.Log("Testing... (Mean square loss Comparison)");
 		var testing_cost = sess.run(tf.reduce_sum(tf.pow(pred - Y, 2.0f)) / (2.0f * test_X.shape[0]),
 			(X, test_X), (Y, test_Y));
@@ -93,8 +104,6 @@ public class BallSpawnerTFNetController : MonoBehaviour
 
 		//SaveModel(sess);
 		//loadGraph();
-		train_X = np.array(0f);
-		train_Y = np.array(0.01f);
 
 		isTraining = false;
 	}
@@ -115,13 +124,7 @@ public class BallSpawnerTFNetController : MonoBehaviour
 		//				  clear_devices: false,
 		//				  initializer_nodes: "");
 	}
-	void loadGraph()
-	{
-		//TextAsset graphModel = Resources.Load("model.pb") as TextAsset;
-		graph = new Graph();
-		//graph.Import(graphModel.bytes);
-		sess = new Session(graph);
-	}
+
 
 	float GetForceFromTensorFlow(float distance)
 	{
@@ -135,7 +138,7 @@ public class BallSpawnerTFNetController : MonoBehaviour
 
 		var recurrent_tensor = sess.run(pred, (X, np.array(distance)));
 		var force = recurrent_tensor[0].GetSingle();
-		Debug.Log(string.Format("GetForceFromTensorFlow: {0}, {1}", distance, force));
+		//Debug.Log(string.Format("GetForceFromTensorFlow: {0}, {1}", distance, force));
 		return force;
 	}
 
@@ -151,56 +154,84 @@ public class BallSpawnerTFNetController : MonoBehaviour
 	IEnumerator DoShoot()
 	{
 		//不投篮时训练升级
-		while (!isTraining)
+		while (true)
 		{
 			//			yield return new WaitUntil(() => !Input.GetButton("Jump"));
 			//			yield return new WaitUntil(() => Input.GetButton("Jump"));
-			var gv2 = new Vector2(
-				TransformGoal.position.x,
-				TransformGoal.position.z);
+			if (isTraining)
+			{
+			}
+			else
+			{
+				var gv2 = new Vector2(
+					TransformGoal.position.x,
+					TransformGoal.position.z);
 
-			var tv2 = new Vector2(
-				transform.position.x, transform.position.z);
+				var tv2 = new Vector2(
+					transform.position.x, transform.position.z);
 
-			var dir = (gv2 - tv2).normalized;
-			var dist = (gv2 - tv2).magnitude;
-			var arch = 0.5f;
+				var dir = (gv2 - tv2).normalized;
+				var dist = (gv2 - tv2).magnitude;
+				var arch = 0.5f;
 
-			var closeness = Math.Min(10f, dist) / 10f;
+				var closeness = Math.Min(10f, dist) / 10f;
 
-			//前期200个靠命中，之后靠训练的数据
-			float force = SuccessCount > 200 ? GetForceFromTensorFlow(dist) : GetForceFromMagicFormula(dist);
-			//Debug.Log(force + "    " + force2);
-			var ball = Instantiate(PrefabBall, transform.position, Quaternion.identity);
-			var bc = ball.GetComponent<BallController>();
-			bc.Force = new Vector3(
-				dir.x * arch * closeness,
-				force,//* (1f / closeness) Optional: Uncomment this to experiment with artificial shot arcs!
-				dir.y * arch * closeness
-			);
-			bc.Distance = dist;
-			bc.OnSuccessAdd += Bc_OnSuccessAdd;
-			yield return new WaitForSeconds(0.05f);
-			MoveToRandomDistance();
+				//前期200个靠命中，之后靠训练的数据
+				float force = SuccessCountFlag > 500 ? GetForceFromTensorFlow(dist) : GetForceRandomly(dist);
+				//Debug.Log(force + "    " + force2);
+				var ball = Instantiate(PrefabBall, transform.position, Quaternion.identity);
+				var bc = ball.GetComponent<BallController>();
+				bc.Force = new Vector3(
+					dir.x * arch * closeness,
+					force,//* (1f / closeness) Optional: Uncomment this to experiment with artificial shot arcs!
+					dir.y * arch * closeness
+				);
+				bc.Distance = dist;
+				bc.OnSuccessAdd += Bc_OnSuccessAdd;
+				yield return new WaitForSeconds(0.002f);
+				MoveToRandomDistance();
+			}
 		}
 	}
-	int SuccessCount;
+	int SuccessCountFlag;
+	List<float> testXTemp = new List<float>();
+	List<float> testYTemp = new List<float>();
+	List<float> trainXTemp = new List<float>();
+	List<float> trainYTemp = new List<float>();
 	private void Bc_OnSuccessAdd(object sender, EventArgs e)
 	{
+		//if(test_X==null) test_X
 		var ball = (BallController)sender;
-		train_X = np.concatenate(new NDArray[]{ train_X, np.array(ball.Distance)});
-		train_Y = np.concatenate(new NDArray[] { train_Y, np.array(ball.Force.y) });
+		//测试数据1/3
+		if (SuccessCountFlag % 3 == 0) 
+		{
+			testXTemp.Add(ball.Distance);
+			testYTemp.Add(ball.Force.y);
+		}
+		else
+		{
+			trainXTemp.Add(ball.Distance);
+			trainYTemp.Add(ball.Force.y);
+		}
 		if (BallController.SuccessCount == 500)
 		{
 			BallController.SuccessCount = 0;
 			BallController.ShotCount = 0;
-			Debug.Log("GetForceFromTensorFlow---------");
 		}
 
-		if (++SuccessCount % 50 == 0)
+		//每500次命中，训练一次
+		if (++SuccessCountFlag % 500 == 0)
 		{
-			//每50次命中，训练一次
+			
+			test_X = np.array(testXTemp.ToArray());
+			test_Y = np.array(testYTemp.ToArray());
+			train_X = np.array(trainXTemp.ToArray());
+			train_Y = np.array(trainYTemp.ToArray());
 			Training();
+			testXTemp = new List<float>();
+			testYTemp = new List<float>();
+			trainXTemp = new List<float>();
+			 trainYTemp = new List<float>();
 		}
 	}
 
@@ -219,7 +250,7 @@ public class BallSpawnerTFNetController : MonoBehaviour
 
 	void MoveToRandomDistance()
 	{
-		var newPosition = new Vector3(TransformGoal.position.x + Random.Range(3f, 25f), transform.parent.position.y, TransformGoal.position.z);// + Random.Range(-5f, 5f));
+		var newPosition = new Vector3(TransformGoal.position.x + Random.Range(5f, 20f), transform.parent.position.y, TransformGoal.position.z);// + Random.Range(-5f, 5f));
 		transform.parent.position = newPosition;
 	}
 }
